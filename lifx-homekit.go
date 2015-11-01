@@ -82,6 +82,80 @@ func initClient() error {
   return nil
 }
 
+func updateHaPowerState(light common.Light, haLight model.LightBulb) (err error) {
+  turnedOn, err := light.GetPower()
+  
+  if err != nil {
+    log.WithField(`error`, err).Error(`Getting power state light`)
+    return err
+  }
+  
+  haLight.SetOn(turnedOn)
+  
+  return nil
+}
+
+func updateHaColors(light common.Light, haLight model.LightBulb) (err error) {
+  color, err := light.GetColor()
+  
+  if err != nil {
+    log.WithField(`error`, err).Error(`Getting color state of light`)
+    return err
+  }
+  
+  hue := color.Hue
+  saturation := color.Saturation
+  brightness := color.Brightness
+  convertedHue := float64(hue) * 360 / math.MaxUint16
+  convertedSaturation := float64(saturation) * 100 / math.MaxUint16
+  convertedBrightness := int(brightness) * 100 / math.MaxUint16
+  
+  log.Infof("[updateHaColors] Hue: %s => %s, Saturation: %s => %s, Brightness: %s => %s", hue, convertedHue, saturation, convertedSaturation, brightness, convertedBrightness)
+  
+  haLight.SetHue(convertedHue)
+  haLight.SetSaturation(convertedSaturation)
+  haLight.SetBrightness(convertedBrightness)
+  
+  return nil
+}
+
+func updateLightColors(light common.Light, haLight model.LightBulb) {
+  // HAP: [0...360]
+  // LIFX: [0...MAX_UINT16]
+  hue := haLight.GetHue()
+  convertedHue := uint16(math.MaxUint16 * float64(hue) / 360)
+
+  // HAP: [0...100]
+  // LIFX: [0...MAX_UINT16]
+  saturation := haLight.GetSaturation()
+  convertedSaturation := uint16(math.MaxUint16 * float64(saturation) / 100)
+
+  // HAP: [0...100]
+  // LIFX: [0...MAX_UINT16]
+  brightness := haLight.GetBrightness()
+  convertedBrightness := uint16(math.MaxUint16 * int(brightness) / 100)
+
+  // HAP: ?
+  // LIFX: [2500..9000]
+  kelvin := HSBKKelvinDefault
+  
+  log.Infof("[updateLightColors] Hue: %s => %s, Saturation: %s => %s, Brightness: %s => %s", hue, convertedHue, saturation, convertedSaturation, brightness, convertedBrightness)
+  
+  color := common.Color{
+    Hue: convertedHue,
+    Saturation: convertedSaturation,
+    Brightness: convertedBrightness,
+    Kelvin: kelvin,
+  }
+
+  light.SetColor(color, 1 * time.Second)
+}
+
+func toggleLight(light common.Light) {
+  turnedOn, _ := light.GetPower()
+  light.SetPower(!turnedOn)
+}
+
 func handleNewLight(light common.Light) (err error) {
   id := light.ID()
 
@@ -114,16 +188,10 @@ func handleNewLight(light common.Light) (err error) {
     haLight: haLight,
   }
   
-  color, _ := light.GetColor()
-
-  // TODO: Convert values regarding their lower and upper limits
-  haLight.SetHue(float64(color.Hue) * 360 / math.MaxUint16)
-  haLight.SetSaturation(float64(color.Saturation) * 100 / math.MaxUint16)
-  haLight.SetBrightness(int(color.Brightness) * 100 / math.MaxUint16)
+  // Get the initial state of the light and communicate it via HomeKit
+  updateHaPowerState(light, haLight)
+  updateHaColors(light, haLight)
   
-  turnedOn, _ := light.GetPower()
-  haLight.SetOn(turnedOn)
-
   events := subscription.Events()
   go func() {
     for {
@@ -132,21 +200,13 @@ func handleNewLight(light common.Light) (err error) {
         switch event := event.(type) {
         case common.EventUpdateColor:
           log.Infof("Light: %s, Event: Update Color", id)
-
-          color, _ := light.GetColor()
-
-          // TODO: Convert values regarding their lower and upper limits
-          haLight.SetHue(float64(color.Hue) * 360 / math.MaxUint16)
-          haLight.SetSaturation(float64(color.Saturation) * 100 / math.MaxUint16)
-          haLight.SetBrightness(int(color.Brightness) * 100 / math.MaxUint16)
+          //updateHaColors(light, haLight)
         case common.EventUpdateLabel:
           // TODO: Find out how to update the name of a homekit device
           log.Infof("Light: %s, Event: Update Label", id)
         case common.EventUpdatePower:
           log.Infof("Light: %s, Event: Update Power", id)
-
-          turnedOn, _ := light.GetPower()
-          haLight.SetOn(turnedOn)
+          updateHaPowerState(light, haLight)
         default:
           log.Debugf("Unhandled event on light: %+v", event)
           continue
@@ -169,42 +229,16 @@ func handleNewLight(light common.Light) (err error) {
     light.SetPower(on)
   })
 
-  updateColors := func(light common.Light, haLight model.LightBulb) {
-    // HAP: [0...360]
-    // LIFX: [0...MAX_UINT16]
-    hue := haLight.GetHue()
-
-    // HAP: [0...100]
-    // LIFX: [0...MAX_UINT16]
-    saturation := haLight.GetSaturation()
-
-    // HAP: [0...100]
-    // LIFX: [0...MAX_UINT16]
-    brightness := haLight.GetBrightness()
-
-    // TODO: Kelvin [2500..9000]
-    
-    // TODO: Is this the correct way to convert values from float64 to uint16
-    color := common.Color{
-      Hue: uint16(math.MaxUint16 * float64(hue) / 360),
-      Saturation: uint16(math.MaxUint16 * float64(saturation) / 100),
-      Brightness: uint16(math.MaxUint16 * int(brightness) / 100),
-      Kelvin: HSBKKelvinDefault,
-    }
-
-    light.SetColor(color, 0 * time.Second)
-  }
-
   haLight.OnBrightnessChanged(func(value int) {
-    updateColors(light, haLight)
+    updateLightColors(light, haLight)
   })
 
   haLight.OnSaturationChanged(func(value float64) {
-    updateColors(light, haLight)
+    updateLightColors(light, haLight)
   })
 
   haLight.OnHueChanged(func(value float64) {
-    updateColors(light, haLight)
+    updateLightColors(light, haLight)
   })
 
   transport, err := hap.NewIPTransport(pin, haLight.Accessory)
@@ -217,11 +251,6 @@ func handleNewLight(light common.Light) (err error) {
   }()
 
   return nil
-}
-
-func toggleLight(light common.Light) {
-  turnedOn, _ := light.GetPower()
-  light.SetPower(!turnedOn)
 }
 
 func handleExpiredLight(light common.Light) (err error) {
