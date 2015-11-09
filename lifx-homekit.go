@@ -65,12 +65,16 @@ func initClient() error {
         switch event := event.(type) {
         case common.EventNewDevice:
           // TODO: In the future it might not be a light ...
-          light, _ := client.GetLightByID(event.Device.ID())
-          handleNewLight(light)
+          light, err := client.GetLightByID(event.Device.ID())
+          if err != nil {
+            handleNewLight(light)
+          }
         case common.EventExpiredDevice:
           // TODO: In the future it might not be a light ...
-          light, _ := client.GetLightByID(event.Device.ID())
-          handleExpiredLight(light)
+          light, err := client.GetLightByID(event.Device.ID())
+          if err != nil {
+            handleExpiredLight(light)
+          }
         default:
           log.Debugf("Unhandled event on client: %+v", event)
           continue
@@ -112,9 +116,28 @@ func updateHaColors(light common.Light, haLight model.LightBulb) (err error) {
   
   log.Infof("[updateHaColors] Hue: %s => %s, Saturation: %s => %s, Brightness: %s => %s", hue, convertedHue, saturation, convertedSaturation, brightness, convertedBrightness)
   
-  haLight.SetHue(convertedHue)
-  haLight.SetSaturation(convertedSaturation)
-  haLight.SetBrightness(convertedBrightness)
+  // Only report the new values when the differences between the old and new values are greater than 3%
+  haHue := haLight.GetHue()
+  haSaturation := haLight.GetSaturation()
+  haBrightness := haLight.GetBrightness()
+  reportHue := math.Abs(haHue - convertedHue) / convertedHue > 0.03
+  reportSaturation := math.Abs(haSaturation - convertedSaturation) / convertedSaturation > 0.03
+  reportBrightness := math.Abs(float64(haBrightness) - float64(convertedBrightness)) / float64(convertedBrightness) > 0.03
+  
+  if (reportHue) {
+    log.Info("Reporting hue")
+    haLight.SetHue(convertedHue)
+  }
+  
+  if (reportSaturation) {
+    log.Info("Reporting saturation")
+    haLight.SetSaturation(convertedSaturation)
+  }
+  
+  if (reportBrightness) {
+    log.Info("Reporting brightness")
+    haLight.SetBrightness(convertedBrightness)
+  }
   
   return nil
 }
@@ -200,7 +223,7 @@ func handleNewLight(light common.Light) (err error) {
         switch event := event.(type) {
         case common.EventUpdateColor:
           log.Infof("Light: %s, Event: Update Color", id)
-          //updateHaColors(light, haLight)
+          updateHaColors(light, haLight)
         case common.EventUpdateLabel:
           // TODO: Find out how to update the name of a homekit device
           log.Infof("Light: %s, Event: Update Label", id)
