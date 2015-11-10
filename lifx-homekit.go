@@ -66,13 +66,13 @@ func initClient() error {
         case common.EventNewDevice:
           // TODO: In the future it might not be a light ...
           light, err := client.GetLightByID(event.Device.ID())
-          if err != nil {
+          if err == nil {
             handleNewLight(light)
           }
         case common.EventExpiredDevice:
           // TODO: In the future it might not be a light ...
           light, err := client.GetLightByID(event.Device.ID())
-          if err != nil {
+          if err == nil {
             handleExpiredLight(light)
           }
         default:
