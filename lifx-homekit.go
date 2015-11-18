@@ -248,20 +248,27 @@ func handleNewLight(light common.Light) (err error) {
   })
 
   haLight.OnStateChanged(func(on bool) {
-    log.Infof("Setting power of light %s to %s", light.ID(), on)
-    light.SetPower(on)
+    go func() {
+      light.SetPower(on)
+    }()
   })
 
   haLight.OnBrightnessChanged(func(value int) {
-    updateLightColors(light, haLight)
+    go func() {
+      updateLightColors(light, haLight)
+    }()
   })
 
   haLight.OnSaturationChanged(func(value float64) {
-    updateLightColors(light, haLight)
+    go func() {
+      updateLightColors(light, haLight)
+    }()
   })
 
   haLight.OnHueChanged(func(value float64) {
-    updateLightColors(light, haLight)
+    go func() {
+      updateLightColors(light, haLight)
+    }()
   })
 
   transport, err := hap.NewIPTransport(pin, haLight.Accessory)
