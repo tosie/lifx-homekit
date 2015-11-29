@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>lifx-homekit by tosie</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>lifx-homekit</h1>
+        <p>HomeKit bridge for LIFX bulbs</p>
+
+        <p class="view"><a href="https://github.com/tosie/lifx-homekit">View the Project on GitHub <small>tosie/lifx-homekit</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/tosie/lifx-homekit/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/tosie/lifx-homekit/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/tosie/lifx-homekit">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="lifx-homekit" class="anchor" href="#lifx-homekit" aria-hidden="true"><span class="octicon octicon-link"></span></a>lifx-homekit</h1>
+
+<p>This projects combines <a href="http://github.com/brutella/hc">http://github.com/brutella/hc</a> and <a href="http://github.com/pdf/golifx">http://github.com/pdf/golifx</a> to make LIFX light bulbs available to Apple HomeKit.</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>At first you need to install Go (<a href="https://golang.org">https://golang.org</a>) and set up your $GOPATH (<a href="https://github.com/golang/go/wiki/GOPATH">https://github.com/golang/go/wiki/GOPATH</a>).</p>
+
+<p>When your <code>go</code> command works you can run</p>
+
+<p><code>go get -u github.com/tosie/lifx-homekit</code></p>
+
+<p>to download the source code and all of its dependencies to your computer. They will be put into <code>$GOPATH/src/github.com/tosie/lifx-homekit</code>.</p>
+
+<p>After downloading the projects and dependencies, go to the project's root directory:</p>
+
+<p><code>cd $GOPATH/src/github.com/tosie/lifx-homekit</code></p>
+
+<p>Here you can run</p>
+
+<p><code>go build lifx-homekit.go</code></p>
+
+<p>to compile the project. The resulting file will be named <code>lifx-homekit</code> and can be run immediately via</p>
+
+<p><code>./lifx-homekit --pin 12341234</code></p>
+
+<p>At startup you must provide a pin code that you can choose by yourself, but must be made up of exactly eight digits (e.g. 12341234). Other than this pin code there is no other configuration to be done. The LIFX lights will be discovered automatically and, upon discovery, will be announced as HomeKit devices.</p>
+
+<p>Now you need to use a HomeKit app in your iOS device (e.g. eve, Insteon, Home, ...; just search for HomeKit on the App Store) to setup the LIFX bulbs as HomeKit devices.</p>
+
+<h2>
+<a id="running-as-a-server-on-a-raspberry-pi" class="anchor" href="#running-as-a-server-on-a-raspberry-pi" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running as a server on a Raspberry Pi</h2>
+
+<p>When you run</p>
+
+<p><code>GOOS=linux GOARCH=arm GOARM=6 go build lifx-homekit.go</code></p>
+
+<p>the project will be compiled in a way that makes it run on a Raspberry Pi. In the future there might be a manual here to describe the steps neccessary to set up everything, but for now this must be suffice as a starting point for you.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/tosie">tosie</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
