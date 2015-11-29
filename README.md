@@ -1,6 +1,6 @@
 # lifx-homekit
 
-This projects combines http://github.com/brutella/hc and http://github.com/pdf/golifx to provide a Apple HomeKit bridge for LIFX light bulbs.
+This projects combines http://github.com/brutella/hc and http://github.com/pdf/golifx to make LIFX light bulbs available to Apple HomeKit.
 
 ## Usage
 
@@ -36,5 +36,5 @@ When you run
 
 `GOOS=linux GOARCH=arm GOARM=6 go build lifx-homekit.go`
 
-the project will be compiled in a way that makes it run on a Raspberry Pi. In the future there might be a manual here to describe the steps neccessary to set up everything, but for now this must be suffice as a starting point for you.
+the project will be compiled in a way that makes it run on a Raspberry Pi. In the future there might be a manual here to describe the steps neccessary to set up everything, but for now this must suffice as a starting point for you.
 
